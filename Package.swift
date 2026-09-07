@@ -189,7 +189,7 @@ func packageDependencies() -> [Package.Dependency] {
 }
 
 func packageTargets() -> [Target] {
-  return [
+  var targets: [Target] = [
     .target(
       name: "Firebase",
       path: "CoreOnly/Sources",
@@ -200,17 +200,7 @@ func packageTargets() -> [Target] {
 
     .target(
       name: "FirebaseAILogic",
-      dependencies: [
-        // Direct dependency on AppCheck for automatic token acquisition and
-        // management.
-        "FirebaseAppCheck",
-        // Despite the direct dependency on App Check, the AI Logic SDK still
-        // uses AppCheck through the interop.
-        "FirebaseAppCheckInterop",
-        "FirebaseAuthInterop",
-        "FirebaseCore",
-        "FirebaseCoreExtension",
-      ],
+      dependencies: firebaseAILogicDependencies(),
       path: "FirebaseAI/Sources",
       swiftSettings: [
         isFoundationModelsSupportedPlatformSwiftSetting(),
@@ -371,8 +361,8 @@ func packageTargets() -> [Target] {
     ),
     .binaryTarget(
       name: "FirebaseAnalytics",
-      url: "https://dl.google.com/firebase/ios/swiftpm/12.18.0/FirebaseAnalytics.zip",
-      checksum: "11e4e9ec78576d71a62e1e328dd16514f00ee5667de302fd4fad43cd8f89b648"
+      url: "https://dl.google.com/firebase/ios/swiftpm/12.19.0/FirebaseAnalytics.zip",
+      checksum: "3fcbbaff30b579e1ad374c2d4bddfe602f0e689cd54e768f19b125848a7b40d2"
     ),
     .testTarget(
       name: "AnalyticsSwiftUnit",
@@ -1373,7 +1363,14 @@ func packageTargets() -> [Target] {
         .headerSearchPath("../../../"),
       ]
     ),
-  ] + firestoreTargets()
+  ]
+  targets.append(contentsOf: firestoreTargets())
+
+  #if compiler(>=6.4) && canImport(FoundationModels)
+    targets.append(contentsOf: geminiLanguageModelTargets())
+  #endif
+
+  return targets
 }
 
 // MARK: - Helper Functions
@@ -1450,7 +1447,7 @@ func googleAppMeasurementDependency() -> Package.Dependency {
     return .package(url: appMeasurementURL, branch: "main")
   }
 
-  return .package(url: appMeasurementURL, "12.18.0" ..< "12.19.0")
+  return .package(url: appMeasurementURL, "12.19.0" ..< "12.20.0")
 }
 
 func abseilDependency() -> Package.Dependency {
@@ -1632,8 +1629,8 @@ func firestoreTargets() -> [Target] {
     } else {
       return .binaryTarget(
         name: "FirebaseFirestoreInternal",
-        url: "https://dl.google.com/firebase/ios/bin/firestore/12.17.0/rc0/FirebaseFirestoreInternal.zip",
-        checksum: "26a8f4b5b2b454b2caf002296da08d71f241628ec27e1610b5b5a8fd5c61feb5"
+        url: "https://dl.google.com/firebase/ios/bin/firestore/12.19.0/rc0/FirebaseFirestoreInternal.zip",
+        checksum: "d1591c51943b0d68be5ca17c96c39e80ecac170a5e803c1c9d46e2d945d004d7"
       )
     }
   }()
@@ -1687,6 +1684,95 @@ func firestoreTargets() -> [Target] {
     firestoreInternalTarget,
   ]
 }
+
+func firebaseAILogicDependencies() -> [Target.Dependency] {
+  var dependencies: [Target.Dependency] = [
+    // Direct dependency on AppCheck for automatic token acquisition and
+    // management.
+    "FirebaseAppCheck",
+    // Despite the direct dependency on App Check, the AI Logic SDK still
+    // uses AppCheck through the interop.
+    "FirebaseAppCheckInterop",
+    "FirebaseAuthInterop",
+    "FirebaseCore",
+    "FirebaseCoreExtension",
+  ]
+
+  #if compiler(>=6.4) && canImport(FoundationModels)
+    if Context.environment["GEMINI_LANGUAGE_MODEL"] != nil {
+      dependencies.append("GeminiLanguageModel")
+    }
+  #endif // compiler(>=6.4) && canImport(FoundationModels)
+
+  return dependencies
+}
+
+#if compiler(>=6.4) && canImport(FoundationModels)
+  func geminiLanguageModelTargets() -> [Target] {
+    guard Context.environment["GEMINI_LANGUAGE_MODEL"] != nil else {
+      return []
+    }
+
+    let swiftSettings: [SwiftSetting] = [
+      .enableUpcomingFeature("ExistentialAny"),
+      .enableUpcomingFeature("InternalImportsByDefault"),
+      .enableUpcomingFeature("MemberImportVisibility"),
+      .swiftLanguageMode(.v6),
+    ]
+
+    return [
+      .target(
+        name: "GeminiLanguageModel",
+        dependencies: [
+          "GeminiAPIClient",
+          "GeminiAPIDataModels",
+        ],
+        path: "GeminiLanguageModel/Sources/GeminiLanguageModel",
+        swiftSettings: swiftSettings
+      ),
+      .testTarget(
+        name: "GeminiLanguageModelTests",
+        dependencies: [
+          "GeminiLanguageModel",
+          "GeminiTestUtilities",
+        ],
+        path: "GeminiLanguageModel/Tests/GeminiLanguageModelTests",
+        swiftSettings: swiftSettings
+      ),
+      .target(
+        name: "GeminiAPIClient",
+        dependencies: [
+          "GeminiAPIDataModels",
+        ],
+        path: "GeminiLanguageModel/Sources/GeminiAPIClient",
+        swiftSettings: swiftSettings
+      ),
+      .testTarget(
+        name: "GeminiAPIClientTests",
+        dependencies: [
+          "GeminiAPIClient",
+          "GeminiTestUtilities",
+        ],
+        path: "GeminiLanguageModel/Tests/GeminiAPIClientTests",
+        swiftSettings: swiftSettings
+      ),
+      .target(
+        name: "GeminiAPIDataModels",
+        path: "GeminiLanguageModel/Sources/GeminiAPIDataModels",
+        swiftSettings: [
+          .enableUpcomingFeature("ExistentialAny"),
+          .enableUpcomingFeature("MemberImportVisibility"),
+          .swiftLanguageMode(.v6),
+        ]
+      ),
+      .target(
+        name: "GeminiTestUtilities",
+        path: "GeminiLanguageModel/Tests/GeminiTestUtilities",
+        swiftSettings: swiftSettings,
+      ),
+    ]
+  }
+#endif // compiler(>=6.4) && canImport(FoundationModels)
 
 func isFoundationModelsSupportedPlatformSwiftSetting() -> SwiftSetting {
   return SwiftSetting.define(
