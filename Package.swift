@@ -18,30 +18,23 @@
 
 import PackageDescription
 
-let firebaseVersion = "12.19.0"
+let firebaseVersion = "13.0.0"
 
 let shouldUseSourceFirestore = Context.environment["FIREBASE_SOURCE_FIRESTORE"] != nil
 
 let package = Package(
   name: "Firebase",
-  platforms: [.iOS(.v15), .macCatalyst(.v15), .macOS(.v10_15), .tvOS(.v15), .watchOS(.v7)],
+  platforms: [.iOS(.v15), .macCatalyst(.v15), .macOS(.v11), .tvOS(.v15), .watchOS(.v8)],
   products: packageProducts(),
   dependencies: packageDependencies(),
   targets: packageTargets(),
-  cxxLanguageStandard: CXXLanguageStandard.gnucxx14
+  cxxLanguageStandard: CXXLanguageStandard.gnucxx17
 )
 
 // MARK: - Package Manifest Builders
 
 func packageProducts() -> [Product] {
   return [
-    .library(
-      name: "FirebaseAI",
-      targets: [
-        "FirebaseAI",
-        "FirebaseAILogic",
-      ]
-    ),
     .library(
       name: "FirebaseAILogic",
       targets: [
@@ -125,10 +118,6 @@ func packageProducts() -> [Product] {
       targets: ["FirebaseMessaging"]
     ),
     .library(
-      name: "FirebaseMLModelDownloader",
-      targets: ["FirebaseMLModelDownloader"]
-    ),
-    .library(
       name: "FirebasePerformance",
       targets: ["FirebasePerformanceTarget"]
     ),
@@ -147,12 +136,12 @@ func packageDependencies() -> [Package.Dependency] {
   return [
     .package(
       url: "https://github.com/google/promises.git",
-      "2.4.0" ..< "3.0.0"
+      "2.4.1" ..< "3.0.0"
     ),
     googleAppMeasurementDependency(),
     .package(
       url: "https://github.com/google/GoogleDataTransport.git",
-      "10.1.0" ..< "11.0.0"
+      "10.1.1" ..< "11.0.0"
     ),
     .package(
       url: "https://github.com/google/GoogleUtilities.git",
@@ -160,11 +149,11 @@ func packageDependencies() -> [Package.Dependency] {
     ),
     .package(
       url: "https://github.com/google/gtm-session-fetcher.git",
-      "3.4.1" ..< "6.0.0"
+      "4.0.0" ..< "6.0.0"
     ),
     .package(
       url: "https://github.com/firebase/nanopb.git",
-      "2.30910.0" ..< "2.30911.0"
+      "2.30910.1" ..< "2.30911.0"
     ),
     abseilDependency(),
     grpcDependency(),
@@ -174,7 +163,7 @@ func packageDependencies() -> [Package.Dependency] {
     ),
     .package(
       url: "https://github.com/firebase/leveldb.git",
-      "1.22.2" ..< "1.23.0"
+      "1.22.5" ..< "1.23.0"
     ),
     .package(
       url: "https://github.com/SlaunchaMan/GCDWebServer.git",
@@ -223,16 +212,6 @@ func packageTargets() -> [Target] {
       swiftSettings: [
         isFoundationModelsSupportedPlatformSwiftSetting(),
       ]
-    ),
-    .target(
-      name: "FirebaseAI",
-      dependencies: ["FirebaseAILogic"],
-      path: "FirebaseAI/Wrapper/Sources"
-    ),
-    .testTarget(
-      name: "FirebaseAIUnit",
-      dependencies: ["FirebaseAI"],
-      path: "FirebaseAI/Wrapper/Tests"
     ),
 
     // MARK: - Firebase Core
@@ -361,8 +340,8 @@ func packageTargets() -> [Target] {
     ),
     .binaryTarget(
       name: "FirebaseAnalytics",
-      url: "https://dl.google.com/firebase/ios/swiftpm/12.19.0/FirebaseAnalytics.zip",
-      checksum: "3fcbbaff30b579e1ad374c2d4bddfe602f0e689cd54e768f19b125848a7b40d2"
+      url: "https://dl.google.com/firebase/ios/swiftpm/12.19.2/FirebaseAnalytics.zip",
+      checksum: "2062b12de12a9c96f4b775d580459386ee19ca5b969edb6de913da62cdc43b42"
     ),
     .testTarget(
       name: "AnalyticsSwiftUnit",
@@ -814,25 +793,6 @@ func packageTargets() -> [Target] {
       linkerSettings: [
         .linkedFramework("Security"),
       ]
-    ),
-
-    .target(
-      name: "FirebaseMLModelDownloader",
-      dependencies: [
-        "FirebaseCore",
-        "FirebaseCoreExtension",
-        "FirebaseInstallations",
-        .product(name: "GULUserDefaults", package: "GoogleUtilities"),
-      ],
-      path: "FirebaseMLModelDownloader/Sources",
-      swiftSettings: [
-        .swiftLanguageMode(SwiftLanguageMode.v5),
-      ]
-    ),
-    .testTarget(
-      name: "FirebaseMLModelDownloaderUnit",
-      dependencies: ["FirebaseMLModelDownloader"],
-      path: "FirebaseMLModelDownloader/Tests/Unit"
     ),
 
     .target(
@@ -1447,7 +1407,7 @@ func googleAppMeasurementDependency() -> Package.Dependency {
     return .package(url: appMeasurementURL, branch: "main")
   }
 
-  return .package(url: appMeasurementURL, "12.19.0" ..< "12.20.0")
+  return .package(url: appMeasurementURL, "12.19.2" ..< "12.20.0")
 }
 
 func abseilDependency() -> Package.Dependency {
@@ -1458,12 +1418,12 @@ func abseilDependency() -> Package.Dependency {
   if shouldUseSourceFirestore {
     packageInfo = (
       "https://github.com/firebase/abseil-cpp-SwiftPM.git",
-      "0.20240722.0" ..< "0.20240723.0"
+      "0.20250512.1" ..< "0.20250513.0"
     )
   } else {
     packageInfo = (
       "https://github.com/google/abseil-cpp-binary.git",
-      "1.2024072200.0" ..< "1.2024072300.0"
+      "1.2025051202.0" ..< "1.2025051300.0"
     )
   }
 
@@ -1476,9 +1436,9 @@ func grpcDependency() -> Package.Dependency {
   // If building Firestore from source, abseil will need to be built as source
   // as the headers in the binary version of abseil are unusable.
   if shouldUseSourceFirestore {
-    packageInfo = ("https://github.com/grpc/grpc-ios.git", "1.69.0" ..< "1.70.0")
+    packageInfo = ("https://github.com/grpc/grpc-ios.git", "1.83.1" ..< "1.84.0")
   } else {
-    packageInfo = ("https://github.com/google/grpc-binary.git", "1.69.0" ..< "1.70.0")
+    packageInfo = ("https://github.com/google/grpc-binary.git", "1.83.1" ..< "1.84.0")
   }
 
   return .package(url: packageInfo.url, packageInfo.range)
@@ -1629,8 +1589,8 @@ func firestoreTargets() -> [Target] {
     } else {
       return .binaryTarget(
         name: "FirebaseFirestoreInternal",
-        url: "https://dl.google.com/firebase/ios/bin/firestore/12.19.0/rc0/FirebaseFirestoreInternal.zip",
-        checksum: "d1591c51943b0d68be5ca17c96c39e80ecac170a5e803c1c9d46e2d945d004d7"
+        url: "https://dl.google.com/firebase/ios/bin/firestore/13.0.0/pre_rc0/FirebaseFirestoreInternal.zip",
+        checksum: "dfbae6d47d6a427c31928db562344204e55a6af0c036a203c5dee8562d75b7d5"
       )
     }
   }()
@@ -1786,5 +1746,7 @@ func appCheckDependency() -> Package.Dependency {
     return .package(url: appCheckURL, branch: branch)
   }
 
+  // TODO: Update to point to AppCheck 12.0
+  // return .package(url: appCheckURL, "12.0.0" ..< "13.0.0")
   return .package(url: appCheckURL, "11.3.0" ..< "12.0.0")
 }
