@@ -1,9 +1,33 @@
-# Unreleased
+# 13.0.0
+- [changed] **Breaking Change**: Renamed `Tool` to `GenerativeModel.Tool` to
+  avoid naming conflicts with Apple's Foundation Models `Tool` type. Calls
+  passing array literals (e.g. `tools: [.googleSearch()]`) continue to work
+  unmodified. (#16700)
+- [removed] **Breaking Change**: Removed `GenerativeModelSession`,
+  `SystemLanguageModel`, `HybridModel`, and associated types and protocols that
+  previously provided an interim integration with Apple's Foundation Models
+  framework. Going forward, use `GeminiLanguageModel` via
+  `ai.geminiLanguageModel(name:)` directly with Apple's native Foundation
+  Models framework.
+- [removed] **Breaking Change:** Removed the deprecated `Backend.vertexAI()` and
+  `Backend.vertexAI(location:)` methods. Use `Backend.enterprise(location:)`
+  instead (note that the default location is `"global"` instead of
+  `"us-central1"`). (#16689)
+- [changed] Deprecated `Backend.agentPlatform(location:)` in favor of
+  `Backend.enterprise(location:)` to reflect the renaming of the Agent Platform
+  Gemini API to the Gemini Enterprise API.
+  Note: No functionality or default values have changed. The new method can be
+  used identically, for example: `FirebaseAI.firebaseAI(backend: .enterprise())`.
 - [changed] **Breaking Change**: Update imports to `import FirebaseAILogic`
   and use the `FirebaseAILogic` Swift Package dependency instead of
   `FirebaseAI`, which has now been removed. See the
   [Swift module name change](https://firebase.google.com/docs/ai-logic/faq-and-troubleshooting#swift-module-name-change)
   FAQ entry for more details.
+- [feature] Server Prompt Templates is now Generally Available (GA). This
+  release also adds support for multi-turn conversations (`TemplateChat`) and
+  function calling (`TemplateTool`). See the
+  [getting started guide](https://firebase.google.com/docs/ai-logic/server-prompt-templates/get-started)
+  for more details. (#16676)
 - [changed] Updated the default function calling mode to `VALIDATED` and
   updated guided generation to use `responseJsonSchema` in
   `GeminiLanguageModel`. (#16649)
@@ -273,7 +297,7 @@
   - If you're new to this library, visit the
     [getting started guide](https://firebase.google.com/docs/ai-logic/get-started).
   - If you used the preview version of the library, visit the
-    [migration guide](https://firebase.google.com/docs/ai-logic/migrate-to-ga)
+    [migration guide](https://firebase.google.com/docs/ai-logic/migrate-from-preview)
     to learn about some important updates.
 - [changed] **Breaking Change**: The `HarmCategory` enum is no longer nested
   inside the `SafetySetting` struct and the `unspecified` case has been
@@ -374,7 +398,7 @@
   instead of the `Any` type. (#13575)
 - [added] Added support for specifying a JSON `responseSchema` in
   `GenerationConfig`; see
-  [control generated output](https://firebase.google.com/docs/ai-logic/structured-output)
+  [control generated output](https://firebase.google.com/docs/ai-logic/generate-structured-output)
   for more details. (#13576)
 
 # 10.29.0
