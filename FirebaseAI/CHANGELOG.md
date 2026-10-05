@@ -1,3 +1,10 @@
+# Unreleased
+- [fixed] Fixed crashes when a chat session's history contained parts with
+  unrecognized data or code execution parts received from the server, when
+  creating a `ModelContent` with an unsupported `Part` type, and when decoding a
+  malformed duration from the server. Requests that include an image that fails
+  to convert now throw a `GenerateContentError` instead of crashing. (#16728)
+
 # 13.0.0
 - [changed] **Breaking Change**: Renamed `Tool` to `GenerativeModel.Tool` to
   avoid naming conflicts with Apple's Foundation Models `Tool` type. Calls
@@ -23,11 +30,11 @@
   `FirebaseAI`, which has now been removed. See the
   [Swift module name change](https://firebase.google.com/docs/ai-logic/faq-and-troubleshooting#swift-module-name-change)
   FAQ entry for more details.
-- [feature] Server Prompt Templates is now Generally Available (GA). This
-  release also adds support for multi-turn conversations (`TemplateChat`) and
-  function calling (`TemplateTool`). See the
+- [feature] **Public Preview**: Added support for multi-turn conversations
+  (`TemplateChat`) and function calling (`TemplateTool`) with Server Prompt
+  Templates. See the
   [getting started guide](https://firebase.google.com/docs/ai-logic/server-prompt-templates/get-started)
-  for more details. (#16676)
+  for more details. (#16740)
 - [changed] Updated the default function calling mode to `VALIDATED` and
   updated guided generation to use `responseJsonSchema` in
   `GeminiLanguageModel`. (#16649)
